@@ -3,33 +3,28 @@ import { brand } from "../brand";
 import "./Nav.css";
 
 export default function Nav() {
-  const [scrolled, setScrolled] = useState(false);
+  const [solid, setSolid] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setSolid(window.scrollY > 24);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <header className={`nav${scrolled ? " nav--scrolled" : ""}`}>
+    <header className={`nav${solid ? " nav--solid" : ""}`}>
       <div className="nav__inner wrap">
-        <a className="nav__mark disp" href="#top">
-          {brand.studio}
+        <a className="nav__brand serif" href="#top">
+          {brand.name}
         </a>
         <nav className="nav__links" aria-label="Primary">
           {brand.nav.map((item) => (
-            <a
-              key={`${item.label}-${item.href}`}
-              className="nav__link mono"
-              href={item.href}
-            >
+            <a className="nav__link" href={item.href} key={item.href}>
               {item.label}
             </a>
           ))}
         </nav>
-        <span className="nav__model mono">{brand.model}</span>
       </div>
     </header>
   );

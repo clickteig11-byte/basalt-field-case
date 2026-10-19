@@ -1,31 +1,19 @@
 :root {
-  --ink: #0b0a08;
-  --ink-2: #131211;
-  --ink-3: #1b1916;
-  --olive: #4a4d3a;
-  --olive-dim: #343726;
-  --rust: #ff5a1f;
-  --rust-dim: #c23f10;
-  --bone: #ede9e0;
-  --yellow: #ffd400;
+  --bg: #0b0b0c;
+  --bg-2: #121214;
+  --fg: #efeeea;
+  --muted: rgba(239, 238, 234, 0.58);
+  --faint: rgba(239, 238, 234, 0.36);
+  --line: rgba(239, 238, 234, 0.14);
+  --line-soft: rgba(239, 238, 234, 0.07);
+  --accent: #e0551d;
 
-  --line: rgba(237, 233, 224, 0.16);
-  --line-soft: rgba(237, 233, 224, 0.08);
-  --line-hard: rgba(11, 10, 8, 0.9);
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
 
-  --font-display: "Anton", "Arial Narrow", Impact, sans-serif;
-  --font-ui: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --gutter: clamp(20px, 5vw, 72px);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-  --gutter: clamp(16px, 4vw, 56px);
-  --edge: 2px;
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
-
-  --z-grain: 9000;
-  --z-nav: 8000;
-  --z-preloader: 9500;
-  --z-stage: 10;
   color-scheme: dark;
 }
 
@@ -43,28 +31,21 @@ body {
 
 html {
   -webkit-text-size-adjust: 100%;
-  scroll-behavior: auto;
 }
 
 body {
-  background: var(--ink);
-  color: var(--bone);
-  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
   font-size: 16px;
-  line-height: 1.4;
+  line-height: 1.5;
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-body.is-locked {
-  overflow: hidden;
-  height: 100vh;
-}
-
 img,
-canvas,
-video {
+canvas {
   display: block;
   max-width: 100%;
 }
@@ -83,142 +64,84 @@ button {
 }
 
 ::selection {
-  background: var(--rust);
-  color: var(--ink);
+  background: var(--accent);
+  color: #0b0b0c;
 }
 
-/* ---------- layout ---------- */
 .wrap {
   width: 100%;
-  max-width: 1600px;
+  max-width: 1440px;
   margin: 0 auto;
   padding-inline: var(--gutter);
 }
 
-/* ---------- type ---------- */
-.disp {
-  font-family: var(--font-display);
+.serif {
+  font-family: var(--serif);
   font-weight: 400;
-  text-transform: uppercase;
-  line-height: 0.86;
-  letter-spacing: 0.005em;
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
 }
 
-.mono {
-  font-family: var(--font-mono);
+.eyebrow {
+  font-family: var(--sans);
   font-weight: 500;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 0.72rem;
+  color: var(--muted);
 }
 
-.label {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  font-size: 0.68rem;
-  color: var(--bone);
+.lead {
+  font-size: clamp(0.95rem, 1.1vw, 1.05rem);
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
 }
 
-.num {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- brutalist atoms ---------- */
 .rule {
-  height: var(--edge);
+  height: 1px;
   width: 100%;
   background: var(--line);
   border: 0;
 }
 
-.hazard {
-  --hazard-a: var(--rust);
-  --hazard-b: var(--ink);
-  background-image: repeating-linear-gradient(
-    -45deg,
-    var(--hazard-a) 0,
-    var(--hazard-a) 12px,
-    var(--hazard-b) 12px,
-    var(--hazard-b) 24px
-  );
-}
-
 .btn {
-  --btn-fg: var(--bone);
-  --btn-bg: transparent;
-  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.7em;
-  padding: 0.95em 1.4em;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 0.74rem;
-  color: var(--btn-fg);
-  background: var(--btn-bg);
-  border: var(--edge) solid var(--btn-fg);
-  transition: transform 0.35s var(--ease), background 0.25s linear,
-    color 0.25s linear, box-shadow 0.35s var(--ease);
-  overflow: hidden;
+  justify-content: center;
+  gap: 0.6em;
+  padding: 0.95em 1.6em;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  color: var(--bg);
+  background: var(--fg);
+  border: 1px solid var(--fg);
+  border-radius: 2px;
+  transition: background 0.25s var(--ease), color 0.25s var(--ease),
+    border-color 0.25s var(--ease), transform 0.25s var(--ease);
 }
 
 .btn:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: 6px 6px 0 var(--btn-fg);
-}
-
-.btn--solid {
-  --btn-bg: var(--rust);
-  --btn-fg: var(--ink);
-  border-color: var(--rust);
-}
-
-.btn--solid:hover {
-  box-shadow: 6px 6px 0 var(--bone);
+  background: transparent;
+  color: var(--fg);
 }
 
 .btn--ghost {
-  --btn-fg: var(--bone);
-  opacity: 0.85;
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--line);
 }
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5em;
-  padding: 0.45em 0.7em;
-  border: var(--edge) solid var(--line);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  background: rgba(11, 10, 8, 0.55);
-  backdrop-filter: blur(6px);
+.btn--ghost:hover {
+  border-color: var(--fg);
 }
 
-.chip--rust {
-  border-color: var(--rust);
-  color: var(--rust);
-}
-
-.dot {
-  width: 7px;
-  height: 7px;
-  background: var(--rust);
-  display: inline-block;
-}
-
-/* ---------- reveal primitives (data-reveal) ---------- */
 [data-reveal] {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
-  will-change: opacity, transform;
+  transform: translateY(18px);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
 }
 
 [data-reveal].is-in {
@@ -226,29 +149,9 @@ button {
   transform: none;
 }
 
-.mask-line {
-  display: block;
-  overflow: hidden;
-}
-
-.mask-line > span {
-  display: block;
-  transform: translateY(105%);
-  transition: transform 1s var(--ease);
-}
-
-.is-in .mask-line > span,
-.mask-line.is-in > span {
-  transform: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   [data-reveal] {
     opacity: 1;
-    transform: none;
-    transition: none;
-  }
-  .mask-line > span {
     transform: none;
     transition: none;
   }
@@ -263,15 +166,10 @@ html.lenis body {
   scroll-behavior: auto !important;
 }
 
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
-}
-
 .lenis.lenis-stopped {
   overflow: hidden;
 }
 
 main {
   position: relative;
-  z-index: var(--z-stage);
 }

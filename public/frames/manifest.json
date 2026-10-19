@@ -1,26 +1,19 @@
 {
-  "generatedAt": "2026-10-17T22:57:57.920Z",
-  "source": "image_20261016_211812_frames",
-  "sourceFrameCount": 220,
-  "width": 1280,
-  "height": 720,
+  "generatedAt": "2026-10-19T01:44:07.892Z",
   "aspect": 1.7778,
+  "poster": "frames/poster.webp",
   "desktop": {
     "dir": "frames/desktop",
-    "count": 220,
-    "width": 1280,
-    "height": 720,
-    "ext": "webp",
-    "pattern": "frame_%03d.webp"
+    "count": 110,
+    "width": 1152,
+    "height": 648,
+    "stride": 2
   },
   "mobile": {
     "dir": "frames/mobile",
-    "count": 110,
-    "width": 854,
-    "height": 480,
-    "ext": "webp",
-    "pattern": "frame_%03d.webp",
-    "stride": 2
-  },
-  "poster": "frames/poster.webp"
+    "count": 74,
+    "width": 768,
+    "height": 432,
+    "stride": 3
+  }
 }

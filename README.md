@@ -1,17 +1,15 @@
-# BASALT — Field Case 04
+# Field Case
 
-A bold-brutalist, scroll-driven product site. Scrolling scrubs a 220-frame image
-sequence that opens a rugged hard case — lid, trays, fully loaded — with pinned
-caption beats synced to the scroll.
+A scroll-driven product page. Scrolling scrubs a pre-rendered image sequence that
+opens a hard case: lid, trays, tools. Four captions sync to the scroll.
 
-Built with Vite + React + TypeScript, GSAP ScrollTrigger, and Lenis.
+Built with Vite, React, TypeScript, and Lenis.
 
 ## Stack
 
-- **Vite 8** + **React 19** + **TypeScript**
-- **GSAP ScrollTrigger** — scrubbed scroll progress
-- **Lenis** — inertial smooth scroll
-- **sharp** — build-time frame pipeline
+- Vite 8 + React 19 + TypeScript
+- Lenis for smooth scrolling
+- sharp for the build-time frame pipeline
 
 ## Getting started
 
@@ -25,18 +23,18 @@ npm run dev        # http://localhost:7713
 | Script | Description |
 | --- | --- |
 | `npm run dev` | Dev server on port 7713 |
-| `npm run build` | Type-check + production build |
+| `npm run build` | Type-check and production build |
 | `npm run preview` | Preview the production build |
 | `npm run build:frames` | Regenerate `public/frames` from source JPGs |
 | `npm run lint` | Oxlint |
 
 ## Frame pipeline
 
-`scripts/build-frames.mjs` converts a source folder of numbered JPGs into
-gap-safe, renumbered WebP for two breakpoints plus a manifest and poster:
+`scripts/build-frames.mjs` turns a folder of numbered JPGs into renumbered WebP
+for two breakpoints, plus a poster and manifest:
 
-- `public/frames/desktop/` — 1280×720, every frame
-- `public/frames/mobile/` — 854×480, every 2nd frame
+- `public/frames/desktop/` - 1152x648, every 2nd frame (110)
+- `public/frames/mobile/` - 768x432, every 3rd frame (74)
 - `public/frames/manifest.json`, `public/frames/poster.webp`
 
 Point it at a source folder with `FRAME_SRC`:
@@ -47,24 +45,31 @@ FRAME_SRC=/path/to/frames npm run build:frames
 
 Defaults to `../image_20261016_211812_frames` relative to the project root.
 
+## How the sequence loads
+
+`lib/frameLoader.ts` fetches frames coarse to fine (strides 16, 8, 4, 2, 1), so a
+usable sequence appears after a handful of requests and sharpens in place. The
+renderer always draws the nearest loaded frame, so scrolling never stalls on a
+missing image. A poster covers the first paint.
+
 ## Structure
 
 ```
 scripts/build-frames.mjs     frame pipeline
 public/frames/               generated webp sequences
 src/
-  brand.ts                   single source for name, palette, copy
-  data/beats.ts              scroll-synced caption beats
-  data/specs.ts              spec table rows
-  lib/frameLoader.ts         progressive preload singleton
-  lib/smoothScroll.ts        Lenis + ScrollTrigger wiring
-  hooks/useImageSequence.ts  DPR-aware canvas sequence renderer
-  components/                Preloader, ScrollSequence, Nav, Marquee,
-                             Specs, CTA, Grain
+  brand.ts                   name, copy, nav, price
+  data/beats.ts              scroll-synced captions
+  data/details.ts            spec rows
+  data/frames.ts             frame counts and dimensions
+  lib/frameLoader.ts         coarse-to-fine preload singleton
+  lib/smoothScroll.ts        Lenis setup and anchor scrolling
+  hooks/useImageSequence.ts  canvas renderer
+  components/                ScrollSequence, Nav, Details, Buy, Grain
 ```
 
-## Customizing
+## Editing
 
-- Brand, copy, nav, and price live in `src/brand.ts`.
-- Scroll copy and timing live in `src/data/beats.ts`.
-- Design tokens (colors, type, edges) live in `src/index.css`.
+- Copy, nav, and price live in `src/brand.ts` and `src/data/`.
+- Colors and type tokens live in `src/index.css`.
+- Section timing is the `500vh` height in `ScrollSequence.tsx`.

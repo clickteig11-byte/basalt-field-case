@@ -8,17 +8,17 @@ export type FramesConfig = {
 
 export const DESKTOP_FRAMES: FramesConfig = {
   dir: "/frames/desktop",
-  count: 220,
-  width: 1280,
-  height: 720,
+  count: 110,
+  width: 1152,
+  height: 648,
   ext: "webp",
 };
 
 export const MOBILE_FRAMES: FramesConfig = {
   dir: "/frames/mobile",
-  count: 110,
-  width: 854,
-  height: 480,
+  count: 74,
+  width: 768,
+  height: 432,
   ext: "webp",
 };
 

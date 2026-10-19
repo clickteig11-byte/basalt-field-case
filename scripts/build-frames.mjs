@@ -16,21 +16,15 @@ const OUT = path.join(ROOT, "public", "frames");
 const DESKTOP_DIR = path.join(OUT, "desktop");
 const MOBILE_DIR = path.join(OUT, "mobile");
 
-const DESKTOP_W = 1280;
-const MOBILE_W = 854;
-const MOBILE_STRIDE = 2;
-
+const DESKTOP = { width: 1152, stride: 2, quality: 58 };
+const MOBILE = { width: 768, stride: 3, quality: 55 };
 const CONCURRENCY = 8;
 
 async function listSourceFrames() {
   const files = await readdir(SRC_DIR);
   return files
     .filter((f) => /^frame_\d+\.(jpe?g|png)$/i.test(f))
-    .sort((a, b) => {
-      const na = parseInt(a.match(/\d+/)[0], 10);
-      const nb = parseInt(b.match(/\d+/)[0], 10);
-      return na - nb;
-    })
+    .sort((a, b) => parseInt(a.match(/\d+/)[0], 10) - parseInt(b.match(/\d+/)[0], 10))
     .map((f) => path.join(SRC_DIR, f));
 }
 
@@ -38,120 +32,77 @@ async function pool(items, worker, size) {
   let i = 0;
   let done = 0;
   const total = items.length;
-  const runners = Array.from({ length: size }, async () => {
-    while (i < total) {
-      const idx = i++;
-      await worker(items[idx], idx);
-      done++;
-      if (done % 20 === 0 || done === total) {
-        process.stdout.write(`\r  converted ${done}/${total}`);
+  await Promise.all(
+    Array.from({ length: size }, async () => {
+      while (i < total) {
+        const idx = i++;
+        await worker(items[idx], idx);
+        done++;
+        if (done % 20 === 0 || done === total) {
+          process.stdout.write(`\r  encoded ${done}/${total}`);
+        }
       }
-    }
-  });
-  await Promise.all(runners);
-  process.stdout.write(`\r  converted ${done}/${total}\n`);
+    })
+  );
+  process.stdout.write(`\r  encoded ${done}/${total}\n`);
 }
 
 const pad = (n) => String(n).padStart(3, "0");
+const take = (arr, stride) => arr.filter((_, i) => i % stride === 0);
 
 async function main() {
-  if (!existsSync(SRC_DIR)) {
-    throw new Error(`Source frames not found: ${SRC_DIR}`);
-  }
-
+  if (!existsSync(SRC_DIR)) throw new Error(`Source frames not found: ${SRC_DIR}`);
   const sources = await listSourceFrames();
   if (!sources.length) throw new Error(`No frame_*.jpg found in ${SRC_DIR}`);
 
   console.log(`Source: ${SRC_DIR}`);
-  console.log(`Found ${sources.length} frames. Writing to ${path.relative(ROOT, OUT)}`);
-  console.log("Note: gap-safe renumbering — output is contiguous 1..N.\n");
+  console.log(`Found ${sources.length} frames -> ${path.relative(ROOT, OUT)}\n`);
 
   await rm(OUT, { recursive: true, force: true });
   await mkdir(DESKTOP_DIR, { recursive: true });
   await mkdir(MOBILE_DIR, { recursive: true });
 
   const meta = await sharp(sources[0]).metadata();
-  const srcW = meta.width || DESKTOP_W;
+  const srcW = meta.width || 1152;
   const srcH = meta.height || Math.round((srcW * 9) / 16);
-  const desktopW = Math.min(DESKTOP_W, srcW);
-  const desktopH = Math.round((desktopW * srcH) / srcW);
-  const mobileW = Math.min(MOBILE_W, srcW);
-  const mobileH = Math.round((mobileW * srcH) / srcW);
 
-  const mobileIndices = new Set();
-  for (let i = 0; i < sources.length; i += MOBILE_STRIDE) mobileIndices.add(i);
+  const dims = (w) => {
+    const width = Math.min(w, srcW);
+    return { width, height: Math.round((width * srcH) / srcW) };
+  };
 
-  let mobileCount = 0;
+  const desktopList = take(sources, DESKTOP.stride);
+  const mobileList = take(sources, MOBILE.stride);
+  const d = dims(DESKTOP.width);
+  const m = dims(MOBILE.width);
 
-  console.log("Desktop pass:");
-  await pool(
-    sources,
-    async (src, idx) => {
-      const name = `frame_${pad(idx + 1)}.webp`;
-      await sharp(src)
-        .resize({ width: desktopW, withoutEnlargement: true })
-        .webp({ quality: 74, effort: 6 })
-        .toFile(path.join(DESKTOP_DIR, name));
-    },
-    CONCURRENCY
-  );
+  const encode = (src, dir, idx, dim, quality) =>
+    sharp(src)
+      .resize({ width: dim.width, withoutEnlargement: true })
+      .webp({ quality, effort: 6 })
+      .toFile(path.join(dir, `frame_${pad(idx + 1)}.webp`));
 
-  // mobile: contiguous renumber of the strided subset
-  const mobileSources = sources.filter((_, i) => mobileIndices.has(i));
-  console.log("Mobile pass:");
-  await pool(
-    mobileSources,
-    async (src, idx) => {
-      const name = `frame_${pad(idx + 1)}.webp`;
-      await sharp(src)
-        .resize({ width: mobileW, withoutEnlargement: true })
-        .webp({ quality: 66, effort: 6 })
-        .toFile(path.join(MOBILE_DIR, name));
-      mobileCount++;
-    },
-    CONCURRENCY
-  );
+  console.log(`Desktop  ${desktopList.length} x ${d.width}x${d.height}`);
+  await pool(desktopList, (src, i) => encode(src, DESKTOP_DIR, i, d, DESKTOP.quality), CONCURRENCY);
 
-  const poster = path.join(OUT, "poster.webp");
+  console.log(`Mobile   ${mobileList.length} x ${m.width}x${m.height}`);
+  await pool(mobileList, (src, i) => encode(src, MOBILE_DIR, i, m, MOBILE.quality), CONCURRENCY);
+
   await sharp(sources[0])
-    .resize({ width: desktopW, withoutEnlargement: true })
-    .webp({ quality: 80, effort: 5 })
-    .toFile(poster);
+    .resize({ width: d.width, withoutEnlargement: true })
+    .webp({ quality: 62, effort: 6 })
+    .toFile(path.join(OUT, "poster.webp"));
 
   const manifest = {
     generatedAt: new Date().toISOString(),
-    source: path.basename(SRC_DIR),
-    sourceFrameCount: sources.length,
-    width: desktopW,
-    height: desktopH,
-    aspect: +(desktopW / desktopH).toFixed(4),
-    desktop: {
-      dir: "frames/desktop",
-      count: sources.length,
-      width: desktopW,
-      height: desktopH,
-      ext: "webp",
-      pattern: "frame_%03d.webp",
-    },
-    mobile: {
-      dir: "frames/mobile",
-      count: mobileCount,
-      width: mobileW,
-      height: mobileH,
-      ext: "webp",
-      pattern: "frame_%03d.webp",
-      stride: MOBILE_STRIDE,
-    },
+    aspect: +(d.width / d.height).toFixed(4),
     poster: "frames/poster.webp",
+    desktop: { dir: "frames/desktop", count: desktopList.length, ...d, stride: DESKTOP.stride },
+    mobile: { dir: "frames/mobile", count: mobileList.length, ...m, stride: MOBILE.stride },
   };
 
-  await writeFile(
-    path.join(OUT, "manifest.json"),
-    JSON.stringify(manifest, null, 2)
-  );
-
-  console.log(`\nDone. Desktop ${sources.length} frames (${desktopW}x${desktopH}), ` +
-    `mobile ${mobileCount} frames (${mobileW}x${mobileH}).`);
+  await writeFile(path.join(OUT, "manifest.json"), JSON.stringify(manifest, null, 2));
+  console.log(`\nDone. desktop=${desktopList.length} mobile=${mobileList.length}`);
 }
 
 main().catch((err) => {

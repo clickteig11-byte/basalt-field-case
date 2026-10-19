@@ -1,33 +1,32 @@
 import Lenis from "lenis";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "lenis/dist/lenis.css";
 
-gsap.registerPlugin(ScrollTrigger);
-
 let lenis: Lenis | null = null;
+let reduced = false;
+let started = false;
 
-export function initSmoothScroll(): Lenis {
-  if (lenis) return lenis;
+export function initSmoothScroll(): Lenis | null {
+  if (started) return lenis;
+  started = true;
+  if (typeof window === "undefined") return null;
 
-  if (typeof history !== "undefined" && "scrollRestoration" in history) {
-    history.scrollRestoration = "manual";
-  }
+  reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  if (reduced) return null;
 
   lenis = new Lenis({
-    duration: 1.15,
+    duration: 1.05,
+    lerp: 0.1,
     smoothWheel: true,
-    wheelMultiplier: 0.95,
-    touchMultiplier: 1.5,
-    lerp: 0.09,
+    wheelMultiplier: 0.9,
+    touchMultiplier: 1.4,
   });
 
-  lenis.on("scroll", ScrollTrigger.update);
-
-  gsap.ticker.add((time) => {
-    lenis?.raf(time * 1000);
-  });
-  gsap.ticker.lagSmoothing(0);
+  const raf = (time: number) => {
+    lenis?.raf(time);
+    requestAnimationFrame(raf);
+  };
+  requestAnimationFrame(raf);
 
   return lenis;
 }
@@ -36,16 +35,7 @@ export function getLenis(): Lenis | null {
   return lenis;
 }
 
-export function stopScroll() {
-  lenis?.stop();
+export function scrollToTarget(target: HTMLElement, offset = 0) {
+  if (lenis) lenis.scrollTo(target, { offset });
+  else target.scrollIntoView({ block: "start" });
 }
-
-export function startScroll() {
-  lenis?.start();
-}
-
-export function scrollToTarget(target: HTMLElement | string, offset = 0) {
-  lenis?.scrollTo(target, { offset });
-}
-
-export { ScrollTrigger };

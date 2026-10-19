@@ -11,7 +11,7 @@ type Options = {
 export function useImageSequence(opts: Options = {}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
-  const lastIndex = useRef(-1);
+  const drawn = useRef(-1);
   const progressRef = useRef(0);
   const onFrameRef = useRef(opts.onFrame);
   const fit = opts.fit ?? "auto";
@@ -23,9 +23,8 @@ export function useImageSequence(opts: Options = {}) {
   const draw = useCallback(
     (index: number) => {
       const canvas = canvasRef.current;
-      const loader = getFrameLoader();
       if (!canvas) return;
-      const img = loader.image(index);
+      const img = getFrameLoader().image(index);
       if (!img || !img.complete || img.naturalWidth === 0) return;
 
       let ctx = ctxRef.current;
@@ -36,29 +35,34 @@ export function useImageSequence(opts: Options = {}) {
       if (!ctx) return;
 
       const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const cw = Math.max(1, Math.round(rect.width * dpr));
-      const ch = Math.max(1, Math.round(rect.height * dpr));
-      if (canvas.width !== cw || canvas.height !== ch) {
-        canvas.width = cw;
-        canvas.height = ch;
+      const cw = Math.max(1, Math.round(rect.width));
+      const ch = Math.max(1, Math.round(rect.height));
+      const cap = cw > 1600 ? 1.5 : 2;
+      const dpr = Math.min(window.devicePixelRatio || 1, cap);
+      const bw = Math.round(cw * dpr);
+      const bh = Math.round(ch * dpr);
+      if (canvas.width !== bw || canvas.height !== bh) {
+        canvas.width = bw;
+        canvas.height = bh;
       }
 
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
-      const cover = fit === "cover" ? true : fit === "contain" ? false : cw / ch >= 1.25;
-      const scale = cover ? Math.max(cw / iw, ch / ih) : Math.min(cw / iw, ch / ih);
+      const cover = fit === "cover" ? true : fit === "contain" ? false : bw / bh >= 1.25;
+      const scale = cover ? Math.max(bw / iw, bh / ih) : Math.min(bw / iw, bh / ih);
       const dw = iw * scale;
       const dh = ih * scale;
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
-      ctx.fillStyle = "#0b0a08";
-      ctx.fillRect(0, 0, cw, ch);
-      ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+      ctx.fillStyle = "#0b0b0c";
+      ctx.fillRect(0, 0, bw, bh);
+      const dx = (bw - dw) / 2;
+      const dy = !cover && bh > bw ? Math.round(bh * 0.31) : (bh - dh) / 2;
+      ctx.drawImage(img, dx, dy, dw, dh);
 
-      lastIndex.current = index;
-      onFrameRef.current?.(index, loader.cfg.count);
+      drawn.current = index;
+      onFrameRef.current?.(index, getFrameLoader().cfg.count);
     },
     [fit]
   );
@@ -69,11 +73,12 @@ export function useImageSequence(opts: Options = {}) {
       const loader = getFrameLoader();
       const total = loader.cfg.count;
       if (!total) return;
-      const maxIdx = loader.highestLoaded >= 0 ? loader.highestLoaded : 0;
       let idx = Math.round(progress * (total - 1));
-      if (idx > maxIdx) idx = maxIdx;
       if (idx < 0) idx = 0;
-      if (idx !== lastIndex.current) draw(idx);
+      else if (idx > total - 1) idx = total - 1;
+      const near = loader.nearestLoaded(idx);
+      if (near === null) return;
+      if (near !== drawn.current) draw(near);
     },
     [draw]
   );
@@ -82,14 +87,13 @@ export function useImageSequence(opts: Options = {}) {
     const loader = getFrameLoader();
     let raf = 0;
     const unsub = loader.subscribe((s) => {
-      if (s.loaded > 0) {
-        cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(() => render(progressRef.current));
-      }
+      if (s.loaded === 0) return;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => render(progressRef.current));
     });
 
     const ro = new ResizeObserver(() => {
-      lastIndex.current = -1;
+      drawn.current = -1;
       render(progressRef.current);
     });
     if (canvasRef.current) ro.observe(canvasRef.current);

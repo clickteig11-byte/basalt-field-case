@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useImageSequence } from "../hooks/useImageSequence";
-import { ScrollTrigger, getLenis } from "../lib/smoothScroll";
+import { getLenis } from "../lib/smoothScroll";
 import { beats } from "../data/beats";
 import { brand } from "../brand";
+import { POSTER } from "../data/frames";
 import "./ScrollSequence.css";
 
-const SECTIONS_VH = 600;
+const SECTION_VH = 500;
 
 function nearestBeat(p: number) {
-  let best = 0;
+  let best = -1;
   let bestDist = Infinity;
   for (let i = 0; i < beats.length; i++) {
     const d = Math.abs(beats[i].at - p);
@@ -22,132 +23,101 @@ function nearestBeat(p: number) {
 
 export default function ScrollSequence() {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const hudFrameRef = useRef<HTMLSpanElement | null>(null);
-  const hudPctRef = useRef<HTMLSpanElement | null>(null);
-  const railRef = useRef<HTMLSpanElement | null>(null);
-  const [active, setActive] = useState(0);
+  const barRef = useRef<HTMLSpanElement | null>(null);
+  const hintRef = useRef<HTMLSpanElement | null>(null);
+  const posterRef = useRef<HTMLImageElement | null>(null);
+  const [active, setActive] = useState(-1);
+  const [ready, setReady] = useState(false);
 
-  const onFrame = useCallback((index: number, total: number) => {
-    if (hudFrameRef.current) {
-      hudFrameRef.current.textContent = `${String(index + 1).padStart(3, "0")} / ${total}`;
-    }
+  const onFrame = useCallback(() => {
+    setReady(true);
   }, []);
 
-  const { canvasRef, render } = useImageSequence({
-    fit: "auto",
-    onFrame,
-  });
+  const { canvasRef, render } = useImageSequence({ onFrame });
 
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
 
-    const st = ScrollTrigger.create({
-      trigger: el,
-      start: "top top",
-      end: "bottom bottom",
-      scrub: true,
-      onUpdate: (self) => {
-        const p = self.progress;
-        render(p);
-        if (railRef.current) railRef.current.style.transform = `scaleY(${p})`;
-        if (hudPctRef.current) {
-          hudPctRef.current.textContent = `${String(Math.round(p * 100)).padStart(2, "0")}%`;
-        }
-        setActive((prev) => {
-          const n = nearestBeat(p);
-          return prev === n ? prev : n;
-        });
-      },
-    });
+    let last = -1;
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      const span = rect.height - window.innerHeight;
+      const p = span > 0 ? Math.min(1, Math.max(0, -rect.top / span)) : 0;
+      if (Math.abs(p - last) < 0.0004) return;
+      last = p;
+      render(p);
+      if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
+      if (hintRef.current) hintRef.current.style.opacity = p > 0.015 ? "0" : "1";
+      setActive((prev) => {
+        const n = p < 0.1 ? -1 : nearestBeat(p);
+        return prev === n ? prev : n;
+      });
+    };
 
-    const refresh = setTimeout(() => ScrollTrigger.refresh(), 200);
+    const lenis = getLenis();
+    update();
+    window.addEventListener("resize", update);
+    if (lenis) lenis.on("scroll", update);
+    else window.addEventListener("scroll", update, { passive: true });
 
     return () => {
-      st.kill();
-      clearTimeout(refresh);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
+      lenis?.off("scroll", update);
     };
   }, [render]);
-
-  const goNext = () => {
-    const lenis = getLenis();
-    const next = beats[Math.min(active + 1, beats.length - 1)];
-    const el = sectionRef.current;
-    if (!el || !lenis) return;
-    const height = el.offsetHeight - window.innerHeight;
-    lenis.scrollTo(window.scrollY + (next.at - (active === 0 ? 0 : beats[active].at)) * height, {
-      duration: 1.1,
-    });
-  };
 
   return (
     <section
       id="sequence"
       ref={sectionRef}
       className="seq"
-      style={{ height: `${SECTIONS_VH}vh` }}
-      aria-label={`${brand.product} sequence`}
+      style={{ height: `${SECTION_VH}vh` }}
+      aria-label={brand.name}
     >
-      <div className="seq__sticky">
+      <div className={`seq__stage${ready ? " is-ready" : ""}`}>
+        <img
+          ref={posterRef}
+          className="seq__poster"
+          src={POSTER}
+          alt=""
+          aria-hidden="true"
+          fetchPriority="high"
+        />
         <canvas ref={canvasRef} className="seq__canvas" />
-        <div className="seq__scrim" aria-hidden="true" />
-        <div className="seq__scan" aria-hidden="true" />
+        <div className="seq__shade" aria-hidden="true" />
 
-        <div className="seq__beats">
-          {beats.map((b, i) => {
-            const state = i === active ? "is-active" : i < active ? "is-past" : "is-future";
-            return (
-              <article
-                key={b.index}
-                className={`seq__beat seq__beat--${b.align ?? "left"} ${state} ${
-                  i === 0 ? "seq__beat--lead" : ""
-                }`}
-                aria-hidden={i !== active}
-              >
-                <div className="seq__beat-inner">
-                  <header className="seq__beat-head">
-                    <span className="seq__beat-index num">{b.index}</span>
-                    <span className="rule seq__beat-rule" />
-                    <span className="seq__beat-kicker label">{b.kicker}</span>
-                  </header>
-                  <h2 className="seq__beat-title disp">
-                    {b.title.map((line) => (
-                      <span key={line} className="mask-line">
-                        <span>{line}</span>
-                      </span>
-                    ))}
-                  </h2>
-                  <p className="seq__beat-body">{b.body}</p>
-                </div>
-              </article>
-            );
-          })}
+        <div className="seq__hero" data-hidden={active >= 0}>
+          <span className="eyebrow">{brand.hero.eyebrow}</span>
+          <h1 className="serif seq__hero-title">{brand.tagline}</h1>
         </div>
 
-        <div className="seq__hud">
-          <div className="seq__hud-left mono">
-            <span className="seq__hud-dot" aria-hidden="true" />
-            <span>FRAME</span>
-            <span ref={hudFrameRef} className="num">
-              001 / 220
-            </span>
-          </div>
-          <button type="button" className="seq__hud-mid mono" onClick={goNext}>
-            <span>{brand.model}</span>
-            <span className="seq__hud-sep" aria-hidden="true">
-              /
-            </span>
-            <span>SCROLL TO OPEN</span>
-          </button>
-          <div className="seq__hud-right mono">
-            <span ref={hudPctRef} className="num">
-              00%
-            </span>
-          </div>
+        <div className="seq__captions">
+          {beats.map((b, i) => (
+            <figure
+              className="seq__caption"
+              data-state={i === active ? "on" : i < active ? "past" : "next"}
+              aria-hidden={i !== active}
+              key={b.statement}
+            >
+              <span className="eyebrow seq__caption-i">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <figcaption>
+                <p className="serif seq__statement">{b.statement}</p>
+                <p className="seq__line">{b.line}</p>
+              </figcaption>
+            </figure>
+          ))}
         </div>
 
-        <div className="seq__rail" aria-hidden="true">
-          <span ref={railRef} className="seq__rail-fill" />
+        <span ref={hintRef} className="eyebrow seq__hint">
+          Scroll
+        </span>
+
+        <div className="seq__track" aria-hidden="true">
+          <span ref={barRef} className="seq__track-fill" />
         </div>
       </div>
     </section>
