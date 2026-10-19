@@ -57,6 +57,7 @@ missing image. A poster covers the first paint.
 ```
 scripts/build-frames.mjs     frame pipeline
 public/frames/               generated webp sequences
+public/fonts/                self-hosted Fraunces and Inter woff2
 src/
   brand.ts                   name, copy, nav, price
   data/beats.ts              scroll-synced captions
