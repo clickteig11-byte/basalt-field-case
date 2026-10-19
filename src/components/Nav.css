@@ -1,0 +1,106 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border-bottom: var(--edge) solid var(--line);
+  padding-top: 0.85rem;
+  transition: background 0.35s var(--ease), padding 0.35s var(--ease);
+}
+
+.nav--scrolled {
+  background: rgba(0, 0, 0, 0.9);
+  padding-top: 0;
+}
+
+.nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 54px;
+}
+
+.nav__mark {
+  font-size: clamp(0.95rem, 2.4vw, 1.4rem);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--bone);
+  white-space: nowrap;
+  transition: color 0.25s linear;
+}
+
+.nav__mark:hover {
+  color: var(--rust);
+}
+
+.nav__links {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.7rem, 2.4vw, 1.9rem);
+}
+
+.nav__link {
+  position: relative;
+  display: inline-block;
+  padding: 0.35em 0;
+  font-size: clamp(0.6rem, 1.4vw, 0.72rem);
+  color: var(--bone);
+  opacity: 0.82;
+  white-space: nowrap;
+  transition: color 0.25s linear, opacity 0.25s linear;
+}
+
+.nav__link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--edge);
+  background: var(--rust);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.3s var(--ease);
+}
+
+.nav__link:hover,
+.nav__link:focus-visible {
+  color: var(--rust);
+  opacity: 1;
+}
+
+.nav__link:hover::after,
+.nav__link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.nav__model {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45em 0.6em;
+  background: var(--rust);
+  color: var(--ink);
+  border: var(--edge) solid var(--rust);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .nav__links {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav,
+  .nav__link::after {
+    transition: none;
+  }
+}

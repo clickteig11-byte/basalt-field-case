@@ -1,0 +1,134 @@
+.pre {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-preloader);
+  background: var(--ink);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: var(--gutter);
+  transition: transform 0.95s var(--ease), opacity 0.7s linear;
+}
+
+.pre--exit {
+  transform: translateY(-101%);
+  opacity: 0.98;
+}
+
+.pre__hazard {
+  height: 10px;
+  width: 100%;
+}
+
+.pre__tick {
+  position: fixed;
+  width: 22px;
+  height: 22px;
+  border: var(--edge) solid var(--line);
+}
+
+.pre__tick--tl {
+  top: var(--gutter);
+  left: var(--gutter);
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.pre__tick--tr {
+  top: var(--gutter);
+  right: var(--gutter);
+  border-left: 0;
+  border-bottom: 0;
+}
+
+.pre__tick--bl {
+  bottom: var(--gutter);
+  left: var(--gutter);
+  border-right: 0;
+  border-top: 0;
+}
+
+.pre__tick--br {
+  bottom: var(--gutter);
+  right: var(--gutter);
+  border-left: 0;
+  border-top: 0;
+}
+
+.pre__center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pre__label {
+  color: var(--rust);
+  letter-spacing: 0.3em;
+}
+
+.pre__word {
+  margin: 0;
+  font-size: clamp(3.5rem, 19vw, 17rem);
+  line-height: 0.82;
+  letter-spacing: 0.01em;
+  color: var(--bone);
+}
+
+.pre__sub {
+  opacity: 0.6;
+}
+
+.pre__sub-sep {
+  color: var(--rust);
+  margin: 0 0.4em;
+}
+
+.pre__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pre__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  opacity: 0.8;
+}
+
+.pre__status {
+  letter-spacing: 0.28em;
+}
+
+.pre__pct {
+  color: var(--rust);
+  font-size: 0.9rem;
+}
+
+.pre__bar {
+  position: relative;
+  height: 10px;
+  border: var(--edge) solid var(--line);
+  overflow: hidden;
+}
+
+.pre__bar-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  transition: width 0.25s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pre {
+    transition: opacity 0.4s linear;
+  }
+  .pre--exit {
+    transform: none;
+    opacity: 0;
+  }
+  .pre__bar-fill {
+    transition: none;
+  }
+}

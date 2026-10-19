@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-10-17T22:57:57.920Z",
+  "source": "image_20261016_211812_frames",
+  "sourceFrameCount": 220,
+  "width": 1280,
+  "height": 720,
+  "aspect": 1.7778,
+  "desktop": {
+    "dir": "frames/desktop",
+    "count": 220,
+    "width": 1280,
+    "height": 720,
+    "ext": "webp",
+    "pattern": "frame_%03d.webp"
+  },
+  "mobile": {
+    "dir": "frames/mobile",
+    "count": 110,
+    "width": 854,
+    "height": 480,
+    "ext": "webp",
+    "pattern": "frame_%03d.webp",
+    "stride": 2
+  },
+  "poster": "frames/poster.webp"
+}
