@@ -18,7 +18,7 @@ export const beats: Beat[] = [
   {
     at: 0.6,
     statement: "Tools stand up.",
-    line: "Cutouts hold each tool upright so you can find it.",
+    line: "Each tool sits upright in its own cutout.",
   },
   {
     at: 0.8,
